@@ -19,6 +19,7 @@ func NewApp(token string) App {
 	}
 }
 
+// GetStatusResponse represents GetStatus API response.
 type GetStatusResponse struct {
 	Data struct {
 		Status           string `json:"status"`
@@ -33,6 +34,7 @@ type GetStatusResponse struct {
 	} `json:"data"`
 }
 
+// GetStatus returns current service status.
 func (a *App) GetStatus() (GetStatusResponse, error) {
 	res, err := getRequest[GetStatusResponse](endpoints.Status(), getRequestParams{})
 	if err != nil {
