@@ -29,8 +29,8 @@ type GetStatusResponse struct {
 			Message   string    `json:"message"`
 			CreatedAt time.Time `json:"created_at"`
 		} `json:"announcments"`
-		LastWipe time.Time `json:"last_wipe"`
-		NextWipe time.Time `json:"next_wipe"`
+		LastWipe string `json:"last_wipe"`
+		NextWipe string `json:"next_wipe"`
 	} `json:"data"`
 }
 
