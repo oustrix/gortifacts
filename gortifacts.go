@@ -25,10 +25,10 @@ type GetStatusResponse struct {
 		Status           string `json:"status"`
 		Version          string `json:"version"`
 		CharactersOnline int    `json:"characters_online"`
-		Announcments     struct {
+		Announcements    []struct {
 			Message   string    `json:"message"`
 			CreatedAt time.Time `json:"created_at"`
-		} `json:"announcments"`
+		} `json:"announcements"`
 		LastWipe string `json:"last_wipe"`
 		NextWipe string `json:"next_wipe"`
 	} `json:"data"`
