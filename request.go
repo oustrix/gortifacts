@@ -29,7 +29,7 @@ func getRequest[T interface{}](endpoint string, params getRequestParams) (T, err
 	}
 	defer res.Body.Close()
 
-	err = json.NewDecoder(res.Body).Decode(payload)
+	err = json.NewDecoder(res.Body).Decode(&payload)
 	if err != nil {
 		return payload, fmt.Errorf("json.Decode: %w", err)
 	}

@@ -2,6 +2,7 @@ package gortifacts
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/oustrix/gortifacts/endpoints"
 )
@@ -20,7 +21,15 @@ func NewApp(token string) App {
 
 type GetStatusResponse struct {
 	Data struct {
-		Status string `json:"status"`
+		Status           string `json:"status"`
+		Version          string `json:"version"`
+		CharactersOnline int    `json:"characters_online"`
+		Announcments     struct {
+			Message   string    `json:"message"`
+			CreatedAt time.Time `json:"created_at"`
+		} `json:"announcments"`
+		LastWipe time.Time `json:"last_wipe"`
+		NextWipe time.Time `json:"next_wipe"`
 	} `json:"data"`
 }
 
