@@ -24,10 +24,10 @@ type GetStatusResponse struct {
 	} `json:"data"`
 }
 
-func (a *App) GetStatus() (*GetStatusResponse, error) {
-	res, err := GetRequestWithoutToken[GetStatusResponse](endpoints.Status())
+func (a *App) GetStatus() (GetStatusResponse, error) {
+	res, err := getRequest[GetStatusResponse](endpoints.Status(), getRequestParams{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get server status: %w", err)
+		return GetStatusResponse{}, fmt.Errorf("failed to get server status: %w", err)
 	}
 
 	return res, nil

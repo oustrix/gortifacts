@@ -6,44 +6,26 @@ import (
 	"net/http"
 )
 
-func GetRequest[T interface{}](endpoint string, token string) (*T, error) {
-	var payload = new(T)
-
-	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
-	if err != nil {
-		return payload, fmt.Errorf("http.NewRequest: %w", err)
-	}
-
-	req.Header.Add(headerAuthorization(token))
-	req.Header.Add(headerAccept())
-
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("http.DefaultClient.Do: %w", err)
-	}
-	defer res.Body.Close()
-
-	err = json.NewDecoder(res.Body).Decode(payload)
-	if err != nil {
-		return payload, fmt.Errorf("json.Decode: %w", err)
-	}
-
-	return payload, nil
+type getRequestParams struct {
+	token string
 }
 
-func GetRequestWithoutToken[T interface{}](endpoint string) (*T, error) {
-	var payload = new(T)
+func getRequest[T interface{}](endpoint string, params getRequestParams) (T, error) {
+	var payload T
 
 	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
 		return payload, fmt.Errorf("http.NewRequest: %w", err)
 	}
-
 	req.Header.Add(headerAccept())
+
+	if params.token != "" {
+		req.Header.Add(headerAuthorization(params.token))
+	}
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("http.DefaultClient.Do: %w", err)
+		return payload, fmt.Errorf("http.DefaultClient.Do: %w", err)
 	}
 	defer res.Body.Close()
 
