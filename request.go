@@ -43,18 +43,18 @@ type postParams struct {
 	body  interface{}
 }
 
-func post[T interface{}](endpoint string, params postParams) (T, error) {
+func post[T interface{}](endpoint string, params postParams) (T, int, error) {
 	var payload T
 
 	jsonBody, err := json.Marshal(params.body)
 	if err != nil {
-		return payload, fmt.Errorf("json.Marshal: %w", err)
+		return payload, 400, fmt.Errorf("json.Marshal: %w", err)
 	}
 
 	body := bytes.NewBuffer(jsonBody)
 	req, err := http.NewRequest(http.MethodPost, endpoint, body)
 	if err != nil {
-		return payload, fmt.Errorf("http.NewRequest: %w", err)
+		return payload, 500, fmt.Errorf("http.NewRequest: %w", err)
 	}
 
 	req.Header.Add(headerAuthorization(params.token))
@@ -63,16 +63,21 @@ func post[T interface{}](endpoint string, params postParams) (T, error) {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return payload, fmt.Errorf("http.DefaultClient.Do: %w", err)
+		if res == nil {
+			return payload, 500, fmt.Errorf("http.DefaultClient.Do: %w", err)
+		} else {
+			return payload, res.StatusCode, fmt.Errorf("http.DefaultClient.Do: %w", err)
+		}
+
 	}
 	defer res.Body.Close()
 
 	err = json.NewDecoder(res.Body).Decode(&payload)
 	if err != nil {
-		return payload, fmt.Errorf("json.Decode: %w", err)
+		return payload, 500, fmt.Errorf("json.Decode: %w", err)
 	}
 
-	return payload, nil
+	return payload, res.StatusCode, nil
 }
 
 func headerAuthorization(token string) (string, string) {

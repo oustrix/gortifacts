@@ -2,6 +2,7 @@ package gortifacts
 
 import (
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/oustrix/gortifacts/endpoints"
@@ -46,8 +47,8 @@ func (a *App) GetStatus() (GetStatusResponse, error) {
 
 // ActionMoveRequest represents data for ActionMove request.
 type ActionMoveRequest struct {
-	X int // The x coordinate of the destination.
-	Y int // The x coordinate of the destination.
+	X int `json:"x"` // The x coordinate of the destination.
+	Y int `json:"y"` // The x coordinate of the destination.
 }
 
 // ActionMoveResponse represents GetStatus API response.
@@ -69,15 +70,34 @@ type ActionMoveResponse struct {
 
 // ActionMove moves a character on the map using the map's X and Y position.
 func (a *App) ActionMove(characterName string, req ActionMoveRequest) (ActionMoveResponse, error) {
-	res, err := post[ActionMoveResponse](
+	res, code, err := post[ActionMoveResponse](
 		endpoints.ActionMove(characterName),
 		postParams{
 			token: a.token,
 			body:  req,
 		},
 	)
+
+	switch code {
+	case http.StatusOK:
+		// Ok
+	case http.StatusUnprocessableEntity, http.StatusBadRequest:
+		return ActionMoveResponse{}, ErrorInvalidInputData
+	case 486:
+		return ActionMoveResponse{}, ErrorCharacterIsLocked
+	case 490:
+		return ActionMoveResponse{}, ErrorCharacterAtDestination
+	case 498:
+		return ActionMoveResponse{}, ErrorCharacterNotFound
+	case 499:
+		return ActionMoveResponse{}, ErrorCharacterCooldown
+	case 500:
+		return ActionMoveResponse{}, fmt.Errorf("internal error: %w", err)
+	default:
+		return ActionMoveResponse{}, fmt.Errorf("unexpected code: %d, error: %w", code, err)
+	}
 	if err != nil {
-		return ActionMoveResponse{}, fmt.Errorf("failed to move: %w", err)
+		return ActionMoveResponse{}, fmt.Errorf("unexpected error while move: %w", err)
 	}
 
 	return res, nil
