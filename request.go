@@ -11,12 +11,12 @@ type getParams struct {
 	token string
 }
 
-func get[T interface{}](endpoint string, params getParams) (T, error) {
+func get[T interface{}](endpoint string, params getParams) (T, int, error) {
 	var payload T
 
 	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
-		return payload, fmt.Errorf("http.NewRequest: %w", err)
+		return payload, http.StatusInternalServerError, fmt.Errorf("http.NewRequest: %w", err)
 	}
 	req.Header.Add(headerAccept())
 
@@ -26,16 +26,20 @@ func get[T interface{}](endpoint string, params getParams) (T, error) {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return payload, fmt.Errorf("http.DefaultClient.Do: %w", err)
+		if res == nil {
+			return payload, http.StatusInternalServerError, fmt.Errorf("http.DefaultClient.Do: %w", err)
+		} else {
+			return payload, res.StatusCode, fmt.Errorf("http.DefaultClient.Do: %w", err)
+		}
 	}
 	defer res.Body.Close()
 
 	err = json.NewDecoder(res.Body).Decode(&payload)
 	if err != nil {
-		return payload, fmt.Errorf("json.Decode: %w", err)
+		return payload, http.StatusInternalServerError, fmt.Errorf("json.Decode: %w", err)
 	}
 
-	return payload, nil
+	return payload, http.StatusOK, nil
 }
 
 type postParams struct {
@@ -48,13 +52,13 @@ func post[T interface{}](endpoint string, params postParams) (T, int, error) {
 
 	jsonBody, err := json.Marshal(params.body)
 	if err != nil {
-		return payload, 400, fmt.Errorf("json.Marshal: %w", err)
+		return payload, http.StatusBadRequest, fmt.Errorf("json.Marshal: %w", err)
 	}
 
 	body := bytes.NewBuffer(jsonBody)
 	req, err := http.NewRequest(http.MethodPost, endpoint, body)
 	if err != nil {
-		return payload, 500, fmt.Errorf("http.NewRequest: %w", err)
+		return payload, http.StatusInternalServerError, fmt.Errorf("http.NewRequest: %w", err)
 	}
 
 	req.Header.Add(headerAuthorization(params.token))
@@ -64,7 +68,7 @@ func post[T interface{}](endpoint string, params postParams) (T, int, error) {
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		if res == nil {
-			return payload, 500, fmt.Errorf("http.DefaultClient.Do: %w", err)
+			return payload, http.StatusInternalServerError, fmt.Errorf("http.DefaultClient.Do: %w", err)
 		} else {
 			return payload, res.StatusCode, fmt.Errorf("http.DefaultClient.Do: %w", err)
 		}
@@ -74,7 +78,7 @@ func post[T interface{}](endpoint string, params postParams) (T, int, error) {
 
 	err = json.NewDecoder(res.Body).Decode(&payload)
 	if err != nil {
-		return payload, 500, fmt.Errorf("json.Decode: %w", err)
+		return payload, http.StatusInternalServerError, fmt.Errorf("json.Decode: %w", err)
 	}
 
 	return payload, res.StatusCode, nil

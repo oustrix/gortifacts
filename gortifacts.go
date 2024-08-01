@@ -37,7 +37,7 @@ type GetStatusResponse struct {
 
 // GetStatus return the status of the game server.
 func (a *App) GetStatus() (GetStatusResponse, error) {
-	res, err := get[GetStatusResponse](endpoints.Status(), getParams{})
+	res, _, err := get[GetStatusResponse](endpoints.Status(), getParams{})
 	if err != nil {
 		return GetStatusResponse{}, fmt.Errorf("failed to get server status: %w", err)
 	}
@@ -63,7 +63,7 @@ type ActionMoveResponse struct {
 				Type string `json:"type"` // The type of the map content.
 				Code string `json:"code"` // The code of the map content.
 			} `json:"content"` // Content of the destination.
-		} `json:"destination"` // Destination details.
+		} `json:"destination"`                 // Destination details.
 		Character Character `json:"character"` // Character details.
 	} `json:"data"`
 }
