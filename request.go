@@ -1,16 +1,17 @@
 package gortifacts
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
 )
 
-type getRequestParams struct {
+type getParams struct {
 	token string
 }
 
-func getRequest[T interface{}](endpoint string, params getRequestParams) (T, error) {
+func get[T interface{}](endpoint string, params getParams) (T, error) {
 	var payload T
 
 	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
@@ -37,10 +38,51 @@ func getRequest[T interface{}](endpoint string, params getRequestParams) (T, err
 	return payload, nil
 }
 
+type postParams struct {
+	token string
+	body  interface{}
+}
+
+func post[T interface{}](endpoint string, params postParams) (T, error) {
+	var payload T
+
+	jsonBody, err := json.Marshal(params.body)
+	if err != nil {
+		return payload, fmt.Errorf("json.Marshal: %w", err)
+	}
+
+	body := bytes.NewBuffer(jsonBody)
+	req, err := http.NewRequest(http.MethodPost, endpoint, body)
+	if err != nil {
+		return payload, fmt.Errorf("http.NewRequest: %w", err)
+	}
+
+	req.Header.Add(headerAuthorization(params.token))
+	req.Header.Add(headerAccept())
+	req.Header.Add(headerContentType())
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return payload, fmt.Errorf("http.DefaultClient.Do: %w", err)
+	}
+	defer res.Body.Close()
+
+	err = json.NewDecoder(res.Body).Decode(&payload)
+	if err != nil {
+		return payload, fmt.Errorf("json.Decode: %w", err)
+	}
+
+	return payload, nil
+}
+
 func headerAuthorization(token string) (string, string) {
 	return "Authorization", fmt.Sprintf("Bearer %s", token)
 }
 
 func headerAccept() (string, string) {
 	return "Accept", "application/json"
+}
+
+func headerContentType() (string, string) {
+	return "Content-Type", "application/json"
 }
